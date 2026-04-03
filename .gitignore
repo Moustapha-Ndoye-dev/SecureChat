@@ -1,3 +1,4 @@
+# Maven
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -7,11 +8,44 @@ release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
-# https://maven.apache.org/wrapper/#usage-without-binary-jar
 .mvn/wrapper/maven-wrapper.jar
 
-# Eclipse m2e generated files
-# Eclipse Core
+# Données locales (SQLite) — recréées au démarrage
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+!data/.gitkeep
+
+# Environnement & secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE — Eclipse
 .project
-# JDT-specific (Eclipse Java Development Tools)
 .classpath
+.settings/
+
+# IDE — IntelliJ / IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# IDE — VS Code (garde les réglages partagés si tu ajoutes .vscode/extensions.json recommandé)
+# .vscode/
+
+# Autres
+*.swp
+*.swo
+*~

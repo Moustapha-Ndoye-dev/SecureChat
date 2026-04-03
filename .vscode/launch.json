@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "SecureChatApiApplication",
+      "request": "launch",
+      "mainClass": "sn.ism.cdsd.api.SecureChatApiApplication",
+      "projectName": ""
+    },
+    {
+      "type": "java",
+      "name": "ChatApp",
+      "request": "launch",
+      "mainClass": "sn.ism.cdsd.crypto.ChatApp",
+      "projectName": "crypto",
+      "vmArgs": "--module-path \"${env:USERPROFILE}\\.m2\\repository\\org\\openjfx\\javafx-base\\21.0.1\\javafx-base-21.0.1-win.jar\";\"${env:USERPROFILE}\\.m2\\repository\\org\\openjfx\\javafx-graphics\\21.0.1\\javafx-graphics-21.0.1-win.jar\";\"${env:USERPROFILE}\\.m2\\repository\\org\\openjfx\\javafx-controls\\21.0.1\\javafx-controls-21.0.1-win.jar\";\"${env:USERPROFILE}\\.m2\\repository\\org\\openjfx\\javafx-fxml\\21.0.1\\javafx-fxml-21.0.1-win.jar\" --add-modules javafx.controls,javafx.fxml"
+    },
+    {
+      "type": "java",
+      "name": "ISM SecureChat (JavaFX)",
+      "request": "launch",
+      "mainClass": "sn.ism.cdsd.crypto.Launcher",
+      "projectName": "crypto",
+      "vmArgs": "--module-path \"${env:USERPROFILE}\\.m2\\repository\\org\\openjfx\\javafx-base\\21.0.1\\javafx-base-21.0.1-win.jar\";\"${env:USERPROFILE}\\.m2\\repository\\org\\openjfx\\javafx-graphics\\21.0.1\\javafx-graphics-21.0.1-win.jar\";\"${env:USERPROFILE}\\.m2\\repository\\org\\openjfx\\javafx-controls\\21.0.1\\javafx-controls-21.0.1-win.jar\";\"${env:USERPROFILE}\\.m2\\repository\\org\\openjfx\\javafx-fxml\\21.0.1\\javafx-fxml-21.0.1-win.jar\" --add-modules javafx.controls,javafx.fxml"
+    }
+  ]
+}

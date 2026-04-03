@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Lancer ISM SecureChat (Maven JavaFX)",
+      "type": "shell",
+      "command": "mvn",
+      "args": ["javafx:run", "-f", "crypto/pom.xml"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {}
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    }
+  ]
+}

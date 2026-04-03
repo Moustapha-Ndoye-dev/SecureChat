@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureChat – Messagerie E2E Professionnelle</title>
+    <link rel="stylesheet" th:href="@{/css/whatsapp.css}" />
+    <!-- Scripts de transport (Indispensables) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE D'AUTHENTIFICATION
+     ════════════════════════════════════════════════════════ -->
+<div id="auth-page">
+    <div class="auth-wrapper">
+        <div class="auth-brand">
+            <div class="brand-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+            </div>
+            <h1>SecureChat</h1>
+            <p>Le standard du chiffrement de bout-en-bout</p>
+        </div>
+
+        <div class="auth-card">
+            <div class="auth-tabs">
+                <button id="tabLogin" class="auth-tab active" onclick="switchTab('login')">Se connecter</button>
+                <button id="tabRegister" class="auth-tab" onclick="switchTab('register')">S'inscrire</button>
+            </div>
+
+            <div id="loginError" class="auth-error hidden"></div>
+            <div id="registerError" class="auth-error hidden"></div>
+
+            <!-- Formulaire Connexion -->
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-field">
+                    <label for="loginUsername">Nom d'utilisateur</label>
+                    <input type="text" id="loginUsername" placeholder="ex: alice_crypto" required>
+                </div>
+                <div class="form-field" style="margin-top:12px;">
+                    <label for="loginPassword">Mot de passe</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="auth-btn" style="margin-top:20px;">
+                    <span>Connexion sécurisée</span>
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="18"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
+                </button>
+            </form>
+
+            <!-- Formulaire Inscription -->
+            <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
+                <div class="form-field">
+                    <label for="regUsername">Choisir un pseudo</label>
+                    <input type="text" id="regUsername" placeholder="ex: bob_secure" required>
+                </div>
+                <div class="form-field" style="margin-top:10px;">
+                    <label for="regPassword">Mot de passe</label>
+                    <input type="password" id="regPassword" placeholder="Min. 4 caractères" autocomplete="new-password" required>
+                </div>
+                <div class="form-field" style="margin-top:10px;">
+                    <label for="regConfirmPassword">Confirmation</label>
+                    <input type="password" id="regConfirmPassword" placeholder="Répéter le mot de passe" autocomplete="new-password" required>
+                </div>
+                <button type="submit" id="registerBtn" class="auth-btn" style="margin-top:20px;">
+                    <span>Créer mon compte E2E</span>
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="12"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                <span>Protection par cryptographie asymétrique</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE CONFIGURATION (Initialisation des clés)
+     ════════════════════════════════════════════════════════ -->
+<div id="config-page" class="hidden">
+    <div class="auth-wrapper config-settings-wrapper">
+        <div class="auth-brand">
+            <h1 id="configTitle">Initialisation Sécurisée</h1>
+            <p id="configSubtitle">Choisissez de 1 à 3 profils réels de chiffrement</p>
+        </div>
+
+        <div class="auth-card">
+            <div class="config-settings-tabs">
+                <button type="button" id="tabConfigAlgorithms" class="config-settings-tab active" onclick="switchConfigTab('algorithms')">Algorithmes</button>
+                <button type="button" id="tabConfigJournal" class="config-settings-tab" onclick="switchConfigTab('journal')">Journalisation</button>
+            </div>
+
+            <div id="config-tab-algorithms" class="config-subpage">
+            <div class="crypto-banner">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="20"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                <span>Vos clés privées ne quittent jamais ce terminal.</span>
+            </div>
+
+            <div class="proto-section">
+                <span class="section-lbl">Profils Cryptographiques Disponibles</span>
+                <div class="proto-list">
+                    <label class="proto-item">
+                        <input type="checkbox" name="myProtocol" value="RSA_AES_GCM">
+                        <div class="proto-check"><svg viewBox="0 0 24 24" fill="currentColor" width="12"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+                        <div class="proto-info">
+                            <span class="pn">RSA</span>
+                            <span class="pd">Chiffrement RSA pour echanger la cle du message.</span>
+                        </div>
+                    </label>
+                    <label class="proto-item">
+                        <input type="checkbox" name="myProtocol" value="ECDH_AES_GCM" checked>
+                        <div class="proto-check"><svg viewBox="0 0 24 24" fill="currentColor" width="12"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></div>
+                        <div class="proto-info">
+                            <span class="pn">ECDH</span>
+                            <span class="pd">Generation d une cle partagee entre les deux utilisateurs.</span>
+                        </div>
+                    </label>
+                    <label class="proto-item">
+                        <input type="checkbox" name="myProtocol" value="ECDH_AES_GCM_SIGNED">
+                        <div class="proto-check"><svg viewBox="0 0 24 24" fill="currentColor" width="12"><path d="M17.81 4.47c-.08 0-.16.02-.23.06C15.66 5.42 14 7.82 14 10.5c0 3.14 2.56 5.7 5.7 5.7.38 0 .74-.04 1.1-.12.54-.12 1.12.18 1.3.72.18.54-.18 1.12-.72 1.3-1.42.31-2.9.31-4.32 0-1.28-.28-2.42-.92-3.32-1.82C12.35 14.83 12 12.72 12 10.5c0-4.58 3.03-8.47 7.08-9.74.54-.17 1.12.13 1.3.67.18.54-.12 1.12-.67 1.3-3.08.97-5.38 3.93-5.38 7.37 0 2.37 1.93 4.3 4.3 4.3.48 0 .95-.08 1.4-.24.54-.19 1.13.1 1.32.64.19.54-.1 1.13-.64 1.32-.2.07-.4.12-.6.17-.45.09-.92.14-1.39.14-5.35 0-9.7-4.35-9.7-9.7 0-2.83 1.25-5.37 3.22-7.1.42-.37.46-1 .09-1.42-.37-.42-1-.46-1.42-.09C4.85 4.34 3.5 7.27 3.5 10.5c0 6.35 5.15 11.5 11.5 11.5 1.5 0 2.95-.29 4.28-.81.54-.21.84-.82.63-1.36-.21-.54-.82-.84-1.36-.63-1 .4-2.07.61-3.18.61-4.14 0-7.5-3.36-7.5-7.5 0-1.85.67-3.54 1.78-4.85.37-.43.32-1.07-.11-1.44-.08-.06-.16-.11-.25-.15z"/></svg></div>
+                        <div class="proto-info">
+                            <span class="pn">ECDH signe</span>
+                            <span class="pd">Comme ECDH, avec verification de signature.</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div id="keygenStatus" class="keygen-box hidden">
+                <div class="kg-step" id="kg1"><div class="kg-dot"></div><span>Génération des clés locales...</span></div>
+                <div class="kg-step" id="kg2"><div class="kg-dot"></div><span>Stockage sécurisé (LocalStorage)...</span></div>
+                <div class="kg-step" id="kg3"><div class="kg-dot"></div><span>Publication de la clé publique...</span></div>
+                <div class="kg-step" id="kg4"><div class="kg-dot"></div><span>Finalisation du profil...</span></div>
+            </div>
+
+            <div class="modal-text-hint" style="margin-top:14px;">
+                Sélection obligatoire : minimum 1 profil, maximum 3 profils.
+            </div>
+
+            <button id="generateKeysBtn" class="auth-btn" style="margin-top:24px;" onclick="startCryptoGeneration()">
+                Générer mes clés & Entrer
+            </button>
+            </div>
+
+            <div id="config-tab-journal" class="config-subpage hidden">
+                <section class="crypto-terminal" aria-label="Journal cryptographique">
+                    <div class="crypto-terminal-titlebar">
+                        <span class="crypto-terminal-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+                        <span class="crypto-terminal-title">securechat — crypto.log</span>
+                        <span class="crypto-terminal-led" id="cryptoTerminalLed" title="État du journal"></span>
+                    </div>
+                    <div class="crypto-terminal-toolbar">
+                        <label class="crypto-terminal-toggle" for="cryptoConsoleLogCb">
+                            <input type="checkbox" id="cryptoConsoleLogCb" />
+                            <span class="crypto-terminal-toggle-label">Journal actif</span>
+                        </label>
+                        <button type="button" class="crypto-terminal-btn" id="cryptoTerminalClearBtn">effacer</button>
+                    </div>
+                    <div class="crypto-terminal-body-wrap">
+                        <div class="crypto-terminal-body" id="cryptoTerminalBody"></div>
+                        <div class="crypto-terminal-scanlines" aria-hidden="true"></div>
+                    </div>
+                </section>
+                <p class="crypto-terminal-footnote">Chaque envoi affiche empreintes SHA-256, tailles binaires, aperçu hex du ciphertext, le JSON STOMP exact et un déchiffrement de contrôle. Données très sensibles — poste personnel uniquement.</p>
+            </div>
+
+            <button id="closeConfigBtn" class="auth-btn secondary hidden" style="margin-top:16px;" onclick="closeConfig()">
+                Retour au chat
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     INTERFACE DE CHAT PRINCIPALE
+     ════════════════════════════════════════════════════════ -->
+<div id="chat-page" class="hidden">
+    <div class="app-shell">
+        <!-- Barre latérale -->
+        <div class="sidebar">
+            <div class="sidebar-hdr">
+                <div class="my-avatar" id="myAvatar"><span id="myAvatarLetter">?</span></div>
+                <div class="my-name" id="currentUserDisplay">...</div>
+                <div class="hdr-actions">
+                    <button class="icon-btn" id="newChatBtn" title="Nouvelle discussion">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="22"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                    </button>
+                    <button class="icon-btn" id="openSettingsBtn" title="Paramètres">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="20"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                    </button>
+                    <button class="icon-btn logout-btn" id="logoutBtn" title="Déconnexion">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="20"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar-search">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="18"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                <input type="text" placeholder="Rechercher une discussion" oninput="filterSidebar(this.value)">
+            </div>
+
+            <div class="conv-list" id="conversationsList">
+                <div class="empty-conv" id="emptyConv">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="38"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                    <p>Aucune conversation</p>
+                    <small>Cliquez sur <strong>+</strong> pour démarrer</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zone de discussion -->
+        <div class="main-area">
+            <!-- État vide -->
+            <div id="welcomeView" class="welcome-view">
+                <div class="welcome-inner">
+                    <div class="welcome-logo">
+                        <svg viewBox="0 0 24 24" fill="var(--wa-green)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                    </div>
+                    <h2>SecureChat Web</h2>
+                    <p>Envoyez et recevez des messages chiffrés de bout-en-bout. Vos discussions sont protégées par les standards AES-256 et ECDH.</p>
+                    <button class="welcome-btn" onclick="fetchContactsAndShowModal()">
+                        Démarrer une conversation
+                    </button>
+                </div>
+            </div>
+
+            <!-- Discussion Active -->
+            <div id="chatView" class="chat-view hidden">
+                <div class="chat-hdr">
+                    <div class="remote-avatar" id="chatAvatar"><span id="chatAvatarLetter">?</span></div>
+                    <div class="chat-hdr-info">
+                        <span id="chatContactName" class="chat-contact-name">...</span>
+                        <div class="chat-e2e-status">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="12"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+                            <span>Chiffré de bout-en-bout</span>
+                        </div>
+                    </div>
+                    <div class="chat-hdr-actions">
+                        <button class="icon-btn del-btn" id="deleteConvBtn" title="Supprimer la conversation">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Overlay de Négociation E2E -->
+                <div id="negotiationOverlay" class="neg-overlay hidden">
+                    <div class="neg-box">
+                        <div class="neg-spinner"></div>
+                        <h3 id="negotiationStatus">Dérivation du secret partagé...</h3>
+                        <p>Négociation des protocoles cryptographiques en cours.</p>
+                    </div>
+                </div>
+
+                <div id="messageArea" class="messages-area">
+                    <!-- Les messages arrivent ici -->
+                </div>
+
+                <div class="enc-banner">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="12"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+                    <span>Les messages sont chiffrés. Personne en dehors de cette discussion ne peut les lire.</span>
+                </div>
+
+                <div class="msg-input-area">
+                    <form id="messageForm">
+                        <textarea id="message" placeholder="Tapez un message chiffré" rows="1" onkeydown="handleMsgKeydown(event)" oninput="autoResize(this)"></textarea>
+                        <button type="submit" id="sendBtn" class="send-btn">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="22"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     MODALES (CONTACTS, REQUÊTE, SUPPRESSION)
+     ════════════════════════════════════════════════════════ -->
+
+<!-- Liste des contacts -->
+<div id="contactsModal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <div class="modal-header-row">
+            <span class="modal-title">Démarrer une discussion</span>
+        </div>
+        <div class="modal-search">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" placeholder="Rechercher par nom..." oninput="filterContacts(this.value)">
+        </div>
+        <div id="contactsList" class="modal-contacts-list"></div>
+        <div class="modal-actions">
+            <button class="mbtn mbtn-secondary" onclick="document.getElementById('contactsModal').classList.add('hidden')">Fermer</button>
+        </div>
+    </div>
+</div>
+
+<!-- Requête entrante -->
+<div id="incomingRequestModal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <div class="modal-icon-ring pulse-ring">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="28"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+        </div>
+        <div id="requestInfo"></div>
+        <div class="modal-actions">
+            <button id="refuseRequestBtn" class="mbtn mbtn-danger">Ignorer</button>
+            <button id="acceptRequestBtn" class="mbtn mbtn-accept">Accepter la discussion</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation de suppression -->
+<div id="deleteConfirmModal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h3 class="modal-title" style="margin-bottom:12px;">Supprimer la discussion ?</h3>
+        <p class="modal-text" id="deleteConfirmText"></p>
+        <div class="modal-actions">
+            <button id="cancelDeleteBtn" class="mbtn mbtn-secondary">Annuler</button>
+            <button id="confirmDeleteBtn" class="mbtn mbtn-danger" style="background:var(--danger);color:#fff;border:none;">Supprimer définitivement</button>
+        </div>
+    </div>
+</div>
+
+<!-- Protocole Mismatch -->
+<div id="protocolMismatchModal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h3 class="modal-title">⛔ Incompatible</h3>
+        <p class="modal-text">Impossible d'établir une connexion sécurisée. Aucun protocole commun avec cet utilisateur.</p>
+        <button id="cancelMismatchBtn" class="mbtn mbtn-secondary" style="margin-top:20px; width:100%">Fermer</button>
+    </div>
+</div>
+
+<!-- Scripts App (Version Monolithique Restaurée) -->
+<script th:src="@{/js/app.js}"></script>
+
+</body>
+</html>

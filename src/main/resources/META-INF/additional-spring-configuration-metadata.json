@@ -1,0 +1,19 @@
+{
+  "properties": [
+    {
+      "name": "application.security.jwt.secret-key",
+      "type": "java.lang.String",
+      "description": "Clé secrète HMAC pour signer les JWT. En production, surcharger avec la variable d'environnement SECURECHAT_JWT_SECRET."
+    },
+    {
+      "name": "application.security.jwt.expiration",
+      "type": "java.lang.Long",
+      "description": "Durée de validité du jeton JWT en millisecondes."
+    },
+    {
+      "name": "application.cors.allowed-origins",
+      "type": "java.lang.String",
+      "description": "Liste d'origines CORS autorisées (séparées par des virgules). Surcharge possible via SECURECHAT_CORS_ORIGINS."
+    }
+  ]
+}
